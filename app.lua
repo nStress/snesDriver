@@ -80,7 +80,7 @@ function setupMySQLFiles(_path,imputfile)
      file = canRead(_path,imputfile)
 	for k,v in pairs(dataLibrary) do
         if string.find(file,k) then 
-		    file = file:gsub(k, v or "exports.nstress:query")	
+		    file = file:gsub(k, v or "exports.snesDriver:query")	
         end
 	end
 	translationFiles(_path,imputfile, file)
@@ -89,7 +89,7 @@ end
 
 function translationFiles(_path,imputfile, file)
 	if dataResource[_path] then
-		print(_path)
+		print(_path..' was checked')
 		return SaveResourceFile(_path,imputfile, file,-1)
 	end
 end
@@ -108,6 +108,9 @@ function ResourceTranslator()
         end
     end
 end
+RegisterCommand("snesDriver",function(source)
+	if source ~=0 then return end;
+		ResourceTranslator()
+end)
 
-ResourceTranslator()
 exports('query', dbQuery)
