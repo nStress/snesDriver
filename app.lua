@@ -52,6 +52,8 @@ local dataLibrary = {
 
 local dataResource = {}
 
+local resourceCounter = 0
+
 function __manifest(__path)
 	if LoadResourceFile(__path, "__resource.lua") then 
 		return '__resource.lua'
@@ -75,11 +77,15 @@ function canRead(_path,input)
     return LoadResourceFile(_path, input) or false
 end
 
+local resources = {}
+
 function setupMySQLFiles(_path,imputfile)
     if not canRead(_path,imputfile) then return end
      file = canRead(_path,imputfile)
 	for k,v in pairs(dataLibrary) do
-        if string.find(file,k) then 
+        if string.find(file,k) then
+			if not resources[_path] then resourceCounter = resourceCounter + 1 end 
+			resources[_path] = true
 		    file = file:gsub(k, v or "exports.snesDriver:query")	
         end
 	end
@@ -111,6 +117,7 @@ end
 RegisterCommand("snesDriver",function(source)
 	if source ~=0 then return end;
 		ResourceTranslator()
+		print('s-au tradus ' .. resourceCounter .. ' resurse')
 end)
 
 exports('query', dbQuery)
