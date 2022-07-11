@@ -1,5 +1,20 @@
+/*
+
+ * snesDriver - It is a translator between MySQL drivers
+ * LUA Version 5.4 
+ *
+ * @see https://snes.tebex.io/
+ *
+ * @author    nStress
+ * @copyright 2022  SNES HUB
+ * @license   https://github.com/nStress/snesDriver/blob/main/LICENSE MIT License
+
+
+ */
+
+
 local dataLibrary = {
-	-- MARE RETARDAT
+	-- MySQL Async 
 	["MySQL.Sync.fetchAll"] = false,
 	['MySQL.Async.fetchAll'] = false,
 	["MySQL.Sync.execute"] = false,
@@ -48,32 +63,11 @@ local dataLibrary = {
 	['exports["oxmysql"]:fetchSync'] = false,
 	['exports["oxmysql"]:fetch'] = false,
 }
-
 local dataResource = {}
 local resourceNumberCounter = {}
 local resourceCounter = {}
 local resources = {}
 
-/**
- * PHPMailer - PHP email creation and transport class.
- * PHP Version 5.5.
- *
- * @see https://github.com/PHPMailer/PHPMailer/ The PHPMailer GitHub project
- *
- * @author    Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
- * @author    Jim Jagielski (jimjag) <jimjag@gmail.com>
- * @author    Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
- * @author    Brent R. Matzelle (original founder)
- * @copyright 2012 - 2020 Marcus Bointon
- * @copyright 2010 - 2012 Jim Jagielski
- * @copyright 2004 - 2009 Andy Prevost
- * @license   http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
- * @note      This program is distributed in the hope that it will be useful - WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.
- */
-
- 
 function __manifest(ResourceName)
 	if LoadResourceFile(ResourceName, "__resource.lua") then 
 		return '__resource.lua'
@@ -82,7 +76,6 @@ function __manifest(ResourceName)
 	end
 	return nil 
 end
-
 
 function __resourceVerifyer(_ResourceName,input)
     return LoadResourceFile(_ResourceName, input) or false
@@ -121,8 +114,6 @@ function dbQuery(queryString, queryParams, callback)
     end
 end
 
-
-
 function ResourceTranslator()
     for resources = 0, GetNumResources() - 1 do
         resourceIndex = GetResourceByFindIndex(resources)
@@ -145,6 +136,8 @@ RegisterCommand("snesDriver",function(source)
 		for k,v in pairs(resourceCounter) do print('^0Resource ^1'..k..'^0 has been successfully translated ') end
 		print('^3snesDriver^0 translated  ^3'..countTable(resourceCounter)..'^0 resource into the ^3'..Config.DatabaseDriver..'^0 driver')
 end)
+
+
 exports('query', dbQuery)
 
 
