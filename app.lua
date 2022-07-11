@@ -47,20 +47,68 @@ local dataLibrary = {
 	['exports["oxmysql"]:executeSync'] = false,
 	['exports["oxmysql"]:fetchSync'] = false,
 	['exports["oxmysql"]:fetch'] = false,
-	['exports.snesDriver:query'] = false
 }
 
 local dataResource = {}
+local resourceNumberCounter = {}
+local resourceCounter = {}
+local resources = {}
 
-local resourceCounter = 0
+/**
+ * PHPMailer - PHP email creation and transport class.
+ * PHP Version 5.5.
+ *
+ * @see https://github.com/PHPMailer/PHPMailer/ The PHPMailer GitHub project
+ *
+ * @author    Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+ * @author    Jim Jagielski (jimjag) <jimjag@gmail.com>
+ * @author    Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
+ * @author    Brent R. Matzelle (original founder)
+ * @copyright 2012 - 2020 Marcus Bointon
+ * @copyright 2010 - 2012 Jim Jagielski
+ * @copyright 2004 - 2009 Andy Prevost
+ * @license   http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
+ * @note      This program is distributed in the hope that it will be useful - WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.
+ */
 
-function __manifest(__path)
-	if LoadResourceFile(__path, "__resource.lua") then 
+ 
+function __manifest(ResourceName)
+	if LoadResourceFile(ResourceName, "__resource.lua") then 
 		return '__resource.lua'
-	elseif LoadResourceFile(__path, "fxmanifest.lua") then 
+	elseif LoadResourceFile(ResourceName, "fxmanifest.lua") then 
 		return 'fxmanifest.lua'
 	end
 	return nil 
+end
+
+
+function __resourceVerifyer(_ResourceName,input)
+    return LoadResourceFile(_ResourceName, input) or false
+end
+
+function __rewriteData(_ResourceName,__fileName)
+    if not __resourceVerifyer(_ResourceName,__fileName) then return end
+    file = __resourceVerifyer(_ResourceName,__fileName)
+	for k,v in pairs(dataLibrary) do
+        if string.find(file,k) then
+			if not resources[_ResourceName] then resourceCounter[_ResourceName] = true end 
+			resources[_ResourceName] = _ResourceName
+		    file = file:gsub(k, v or "exports.snesDriver:query")	
+        end
+	end
+		SaveResourceFile(_ResourceName,__fileName, file,-1)
+end
+
+function countTable(table)
+	local counter = 0
+	if type(table) == 'table' then 
+		for __,__ in pairs(table) do
+			counter = counter + 1
+		end
+	end
+	return counter
 end
 
 function dbQuery(queryString, queryParams, callback)
@@ -73,32 +121,7 @@ function dbQuery(queryString, queryParams, callback)
     end
 end
 
-function canRead(_path,input)
-    return LoadResourceFile(_path, input) or false
-end
 
-local resources = {}
-
-function setupMySQLFiles(_path,imputfile)
-    if not canRead(_path,imputfile) then return end
-     file = canRead(_path,imputfile)
-	for k,v in pairs(dataLibrary) do
-        if string.find(file,k) then
-			if not resources[_path] then resourceCounter = resourceCounter + 1 end 
-			resources[_path] = true
-		    file = file:gsub(k, v or "exports.snesDriver:query")	
-        end
-	end
-	translationFiles(_path,imputfile, file)
-	dataResource[_path] = nil
-end
-
-function translationFiles(_path,imputfile, file)
-	if dataResource[_path] then
-		print(_path..' was checked')
-		return SaveResourceFile(_path,imputfile, file,-1)
-	end
-end
 
 function ResourceTranslator()
     for resources = 0, GetNumResources() - 1 do
@@ -108,16 +131,21 @@ function ResourceTranslator()
             for i=1,GetNumResourceMetadata(resourceIndex,'server_script')-1 do 
                 local data = GetResourceMetadata(resourceIndex,'server_script', i)
                 if not string.find(data,"@") and not string.find(data,'*') then 
-                    setupMySQLFiles(resourceIndex,data)
+                    __rewriteData(resourceIndex,data)
                 end
             end
         end
     end
 end
-RegisterCommand("snesDriver",function(source)
-	if source ~=0 then return end;
-		ResourceTranslator()
-		print('s-au tradus ' .. resourceCounter .. ' resurse')
-end)
 
+
+RegisterCommand("snesDriver",function(source)
+	if source ~= 0 then return end;
+		ResourceTranslator()
+		for k,v in pairs(resourceCounter) do print('^0Resource ^1'..k..'^0 has been successfully translated ') end
+		print('^3snesDriver^0 translated  ^3'..countTable(resourceCounter)..'^0 resource into the ^3'..Config.DatabaseDriver..'^0 driver')
+end)
 exports('query', dbQuery)
+
+
+
